@@ -50,9 +50,16 @@ class ServiceRecord < ActiveRecord::Base
   end
   
   # Calculated field
+  def rounded_amount_mt
+    (quantity * amount_mt * unit_factor_mt * unit_mt).round(2)
+  end
+  
+  def rounded_amount_tt
+    (quantity * amount_tt * unit_factor_tt * unit_tt).round(2)
+  end
+  
   def amount
-    # TODO: round as requested by standard
-    self.quantity * ((self.amount_mt * self.unit_factor_mt * self.unit_mt) + (self.amount_tt * self.unit_factor_tt * self.unit_tt))
+   rounded_amount_mt + rounded_amount_tt
   end
 
   def text

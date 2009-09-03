@@ -259,26 +259,35 @@ class Invoice < ActiveRecord::Base
   end
   
   # Calculated fields
-  def amount_mt(tariff_type = nil, options = {})
-    options.merge!(:conditions => {:tariff_type => tariff_type}) if tariff_type
-    BigDecimal.new(service_records.sum('truncate(quantity * amount_mt * unit_factor_mt * unit_mt + 0.005, 2)', options) || '0.0')
+  def amount_mt(tariff_type = nil)
+    if tariff_type
+      records = service_records.select{|record| record.tariff_type == tariff_type}
+    else
+      records = service_records
+    end
+    BigDecimal.new(records.to_a.sum{|record| record.rounded_amount_mt}.to_s)
   end
   
-  def amount_tt(tariff_type = nil, options = {})
-    options.merge!(:conditions => {:tariff_type => tariff_type}) if tariff_type
-    BigDecimal.new(service_records.sum('truncate(quantity * amount_tt * unit_factor_tt * unit_tt + 0.005, 2)', options) || '0.0')
+  def amount_tt(tariff_type = nil)
+    if tariff_type
+      records = service_records.select{|record| record.tariff_type == tariff_type}
+    else
+      records = service_records
+    end
+    BigDecimal.new(records.to_a.sum{|record| record.rounded_amount_tt}.to_s)
   end
   
   def amount(tariff_type = nil, options = {})
-    amount_mt(tariff_type, options) + amount_tt(tariff_type, options)
+    if tariff_type
+      records = service_records.select{|record| record.tariff_type == tariff_type}
+    else
+      records = service_records
+    end
+    BigDecimal.new(records.to_a.sum{|record| record.amount}.to_s)
   end
 
   def rounded_amount
-    if amount.nil?
-      return 0
-    else
-      return amount.currency_round
-    end
+    amount_mt.currency_round + amount_tt.currency_round
   end
 
   # Generalization
